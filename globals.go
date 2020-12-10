@@ -5,7 +5,7 @@
 	> Created Time: 2020年12月05日 星期六 17时00分02秒
  ************************************************************************/
 
-package gspiders
+package gspider
 
 const (
 	ON  = true

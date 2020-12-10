@@ -5,7 +5,7 @@
 	> Created Time: 2020年12月07日 星期一 10时22分35秒
  ************************************************************************/
 
-package gspiders
+package gspider
 
 import (
 	"github.com/gocolly/colly"

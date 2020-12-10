@@ -9,7 +9,7 @@ simple spider
 基于colly实现类似python中scrapy中的spider
 */
 
-package gspiders
+package gspider
 
 import (
 	"github.com/gocolly/colly"

@@ -8,10 +8,10 @@
 package main
 
 import (
-	"gspiders"
+	"gspider"
 )
 
-var settings = &gspiders.SpiderSettings{
+var settings = &gspider.SpiderSettings{
 	Debug: true,
 	// 是否在启动前清空之前的数据
 	FlushOnStart: true,
@@ -43,11 +43,11 @@ func main() {
 		"http://httpbin.org/cookies/set?a=b&c=d",
 		"http://httpbin.org/cookies",
 	}
-	spider := gspiders.NewSimpleSpider(urls, settings)
-	spider.OnRequest(func(r *gspiders.Request) {
+	spider := gspider.NewSimpleSpider(urls, settings)
+	spider.OnRequest(func(r *gspider.Request) {
 		spider.Logger.Printf("create a task: %s %s", r.Method, r.URL)
 	})
-	spider.OnResponse(func(r *gspiders.Response) {
+	spider.OnResponse(func(r *gspider.Response) {
 		spider.Logger.Printf("recv a resp: %s", r.Request.URL)
 	})
 	spider.Start()

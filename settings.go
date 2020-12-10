@@ -5,7 +5,7 @@
 	> Created Time: 2020年12月05日 星期六 10时16分31秒
  ************************************************************************/
 
-package gspiders
+package gspider
 
 type RedisParamsType struct {
 }

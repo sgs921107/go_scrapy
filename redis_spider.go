@@ -10,7 +10,7 @@ redis spider
 启动后会监听start url队列中的任务进行下载
 */
 
-package gspiders
+package gspider
 
 import (
 	"github.com/go-redis/redis"

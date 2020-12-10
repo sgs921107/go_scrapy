@@ -1,4 +1,4 @@
-module github.com/sgs921107/gspiders/v0.1
+module github.com/sgs921107/gspider
 
 go 1.15
 
