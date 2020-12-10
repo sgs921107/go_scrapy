@@ -8,7 +8,7 @@
 package main
 
 import (
-	"gspider"
+	"github.com/sgs921107/gspider"
 )
 
 var settings = &gspider.SpiderSettings{
