@@ -8,9 +8,9 @@
 package gspider
 
 import (
-	"github.com/gocolly/colly"
-	"github.com/gocolly/colly/debug"
-	"github.com/gocolly/colly/extensions"
+	"github.com/gocolly/colly/v2"
+	"github.com/gocolly/colly/v2/debug"
+	"github.com/gocolly/colly/v2/extensions"
 	"log"
 	"net/http"
 	"os"
@@ -35,7 +35,7 @@ type (
 // spider结构
 type BaseSpider struct {
 	Collector      *colly.Collector
-	Settings       *SpiderSettings
+	settings       *SpiderSettings
 	Logger         *log.Logger
 	output         *os.File
 	curReqCounter  int64
@@ -83,8 +83,8 @@ func (s *BaseSpider) showCounter() {
 // 配置http配置
 func (s *BaseSpider) SetHttp() {
 	s.Collector.WithTransport(&http.Transport{
-		DisableKeepAlives: s.Settings.KeepAlive,
-		MaxIdleConns:      s.Settings.MaxConns,
+		DisableKeepAlives: s.settings.KeepAlive,
+		MaxIdleConns:      s.settings.MaxConns,
 	})
 }
 
@@ -104,9 +104,9 @@ func (s *BaseSpider) OnError(f func(r *Response, err error)) {
 	s.Collector.OnError(f)
 }
 
-// func (s *BaseSpider) OnResponseHeaders(f colly.ResponseHeadersCallback) {
-// 	s.Collector.OnResponseHeaders(f)
-// }
+func (s *BaseSpider) OnResponseHeaders(f colly.ResponseHeadersCallback) {
+	s.Collector.OnResponseHeaders(f)
+}
 
 func (s *BaseSpider) OnResponse(f ResponseCallback) {
 	s.Collector.OnResponse(f)
@@ -154,8 +154,8 @@ func (s *BaseSpider) SetProxyFunc(f ProxyFunc) {
 
 // 给spider配置一个logger
 func (s *BaseSpider) SetLogger() {
-	if s.Settings.LogFile != "" {
-		output, err := os.OpenFile(s.Settings.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if s.settings.LogFile != "" {
+		output, err := os.OpenFile(s.settings.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			panic(err)
 		}
@@ -163,11 +163,11 @@ func (s *BaseSpider) SetLogger() {
 	} else {
 		s.output = os.Stderr
 	}
-	prefix := s.Settings.LogPrefix
-	flag := s.Settings.LogFlag
+	prefix := s.settings.LogPrefix
+	flag := s.settings.LogFlag
 	s.Logger = NewLogger(s.output, prefix, flag)
 	// 配置debugger
-	if s.Settings.Debug == true {
+	if s.settings.Debug == true {
 		s.Collector.SetDebugger(&debug.LogDebugger{
 			Output: s.output,
 			Prefix: prefix,
@@ -179,17 +179,17 @@ func (s *BaseSpider) SetLogger() {
 // 加载配置
 func (s *BaseSpider) LoadSettings() {
 	// 配置最大深度
-	s.Collector.MaxDepth = s.Settings.MaxDepth
+	s.Collector.MaxDepth = s.settings.MaxDepth
 	// 配置是否可重复抓取
-	s.Collector.AllowURLRevisit = s.Settings.DontFilter
+	s.Collector.AllowURLRevisit = s.settings.DontFilter
 	// http 配置
 	s.SetHttp()
 	// 配置是否启用异步
-	s.Collector.Async = s.Settings.Async
+	s.Collector.Async = s.settings.Async
 	// 设置timeout
-	s.Collector.SetRequestTimeout(time.Duration(s.Settings.Timeout) * time.Second)
+	s.Collector.SetRequestTimeout(time.Duration(s.settings.Timeout) * time.Second)
 	// 配置是否启用cookies
-	if s.Settings.EnableCookies == OFF {
+	if s.settings.EnableCookies == OFF {
 		s.Collector.DisableCookies()
 	}
 	s.SetLogger()

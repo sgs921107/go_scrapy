@@ -12,20 +12,21 @@ simple spider
 package gspider
 
 import (
-	"github.com/gocolly/colly"
-	"github.com/gocolly/colly/queue"
+	"github.com/gocolly/colly/v2"
 )
 
 type SimpleSpider struct {
 	BaseSpider
-	Urls []string
-	// Storage *queue.InMemoryQueueStorage
-	Queue *queue.Queue
+	Urls  []string
+	Queue *Queue
 }
 
 func (s *SimpleSpider) Start() {
 	s.BaseSpider.Start()
-	defer s.Close()
+	defer func() {
+		s.Queue.Stop()
+		s.Close()
+	}()
 	for _, url := range s.Urls {
 		s.Queue.AddURL(url)
 	}
@@ -38,8 +39,8 @@ func (s *SimpleSpider) Close() {
 }
 
 func (s *SimpleSpider) Init() {
-	storage := &queue.InMemoryQueueStorage{MaxSize: 10000}
-	q, _ := queue.New(s.Settings.ConcurrentReqs, storage)
+	storage := &InMemoryQueueStorage{MaxSize: 10000}
+	q, _ := NewQueue(s.settings.ConcurrentReqs, storage)
 	s.Queue = q
 	s.BaseSpider.Init()
 }
@@ -48,7 +49,7 @@ func NewSimpleSpider(urls []string, settings *SpiderSettings) *SimpleSpider {
 	spider := &SimpleSpider{
 		BaseSpider: BaseSpider{
 			Collector: colly.NewCollector(),
-			Settings:  settings,
+			settings:  settings,
 		},
 		Urls: urls,
 	}

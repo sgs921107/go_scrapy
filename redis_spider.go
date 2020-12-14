@@ -13,12 +13,12 @@ redis spider
 package gspider
 
 import (
-	"github.com/gocolly/colly"
-	"github.com/gocolly/colly/queue"
+	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/redisstorage"
 	// "runtime"
 	"github.com/sgs921107/gcommon"
 	"github.com/sgs921107/gredis"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -27,14 +27,15 @@ import (
 type RedisSpider struct {
 	BaseSpider
 	RedisKey string
-	// Storage  *redisstorage.Storage
-	Client *gredis.Client
-	Queue  *queue.Queue
-	last   int64
+	Client   *gredis.Client
+	Queue    *Queue
+	last     int64
+	wg       *sync.WaitGroup
 }
 
 // 监听start_urls队列
 func (s *RedisSpider) ListenStartUrls() {
+	defer s.wg.Done()
 	for {
 		if atomic.LoadUint32(&s.exit) != 0 {
 			break
@@ -52,22 +53,25 @@ func (s *RedisSpider) ListenStartUrls() {
 func (s *RedisSpider) Start() {
 	s.BaseSpider.Start()
 	defer s.Close()
+	s.wg.Add(1)
 	go s.ListenStartUrls()
 	for {
 		s.Queue.Run(s.Collector)
 		s.Collector.Wait()
-		if s.Settings.MaxIdleTimeout != 0 {
+		if s.settings.MaxIdleTimeout != 0 {
 			now := gcommon.TimeStamp(0)
 			// 超出最大闲置时间则退出
-			maxIdleTimeout := int64(s.Settings.MaxIdleTimeout)
+			maxIdleTimeout := int64(s.settings.MaxIdleTimeout)
 			// 如果最大闲置时间配置过小，保证所有发出的请求已结束
-			if maxIdleTimeout <= int64(s.Settings.Timeout) {
-				maxIdleTimeout += int64(s.Settings.Timeout)
+			if maxIdleTimeout <= int64(s.settings.Timeout) {
+				maxIdleTimeout += int64(s.settings.Timeout)
 			}
 			if now-atomic.LoadInt64(&s.last) > maxIdleTimeout {
 				break
 			}
 		}
+		// 重置queue的状态,等待下一次启动
+		s.Queue.Stop()
 		time.Sleep(500 * time.Millisecond)
 		// runtime.Gosched()
 	}
@@ -81,15 +85,17 @@ func (s *RedisSpider) recordLastTime(*Request) {
 func (s *RedisSpider) Close() {
 	s.Client.Close()
 	s.BaseSpider.Close()
+	// 等待监听start urls队列的任务结束
+	s.wg.Wait()
 }
 
 // 配置使用redis存储
 func (s *RedisSpider) Init() {
 	storage := &redisstorage.Storage{
-		Address:  s.Settings.RedisAddr,
-		Password: s.Settings.RedisPassword,
-		DB:       s.Settings.RedisDB,
-		Prefix:   s.Settings.RedisPrefix,
+		Address:  s.settings.RedisAddr,
+		Password: s.settings.RedisPassword,
+		DB:       s.settings.RedisDB,
+		Prefix:   s.settings.RedisPrefix,
 	}
 	err := s.Collector.SetStorage(storage)
 	if err != nil {
@@ -97,15 +103,15 @@ func (s *RedisSpider) Init() {
 		panic(err)
 	}
 	s.Client = gredis.NewClientFromRedisClient(storage.Client)
-	if s.Settings.FlushOnStart {
+	if s.settings.FlushOnStart {
 		if err := storage.Clear(); err != nil {
 			s.Logger.Fatal("clear previous data of redis storage failed: " + err.Error())
 		}
 	}
-	q, _ := queue.New(s.Settings.ConcurrentReqs, storage)
+	q, _ := NewQueue(s.settings.ConcurrentReqs, storage)
 	s.Queue = q
 	// 如果配置了最大闲置时间
-	if s.Settings.MaxIdleTimeout != 0 {
+	if s.settings.MaxIdleTimeout != 0 {
 		s.OnRequest(s.recordLastTime)
 		atomic.StoreInt64(&s.last, gcommon.TimeStamp(0))
 	}
@@ -125,9 +131,10 @@ func NewRedisSpider(redisKey string, settings *SpiderSettings) *RedisSpider {
 	spider := &RedisSpider{
 		BaseSpider: BaseSpider{
 			Collector: colly.NewCollector(),
-			Settings:  settings,
+			settings:  settings,
 		},
 		RedisKey: redisKey,
+		wg:       &sync.WaitGroup{},
 	}
 	spider.Init()
 	return spider
