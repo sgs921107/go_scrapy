@@ -13,12 +13,12 @@ redis spider
 package gspider
 
 import (
-	"github.com/go-redis/redis"
 	"github.com/gocolly/colly"
 	"github.com/gocolly/colly/queue"
 	"github.com/gocolly/redisstorage"
 	// "runtime"
 	"github.com/sgs921107/gcommon"
+	"github.com/sgs921107/gredis"
 	"sync/atomic"
 	"time"
 )
@@ -28,7 +28,7 @@ type RedisSpider struct {
 	BaseSpider
 	RedisKey string
 	// Storage  *redisstorage.Storage
-	Client *redis.Client
+	Client *gredis.Client
 	Queue  *queue.Queue
 	last   int64
 }
@@ -96,7 +96,7 @@ func (s *RedisSpider) Init() {
 		s.Logger.Fatalf("set redis storage failed: %s", err.Error())
 		panic(err)
 	}
-	s.Client = storage.Client
+	s.Client = gredis.NewClientFromRedisClient(storage.Client)
 	if s.Settings.FlushOnStart {
 		if err := storage.Clear(); err != nil {
 			s.Logger.Fatal("clear previous data of redis storage failed: " + err.Error())

@@ -29,6 +29,14 @@ github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca h1:NugYot0LIVPxT
 github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca/go.mod h1:uugorj2VCxiV1x+LzaIdVa9b4S4qGAcH6cbhh4qVxOU=
 github.com/sgs921107/gcommon v0.0.0-20201210083511-edf043f5d1dc h1:wcN+hnNrQUHm5O4VC8zNpv9UYIsOnn3sesJJzuzwrkg=
 github.com/sgs921107/gcommon v0.0.0-20201210083511-edf043f5d1dc/go.mod h1:vA/dFbWmbvb7NJ7Gs+iHjuqa4Sx+O9nUSFp9T7fV/rI=
+github.com/sgs921107/gcommon v0.0.0-20201211041633-f41fbbc753c2 h1:/3z/6o/5HIVDONUQGTgwS7a2RDsx2uyMKKvoCcl22yk=
+github.com/sgs921107/gcommon v0.0.0-20201211041633-f41fbbc753c2/go.mod h1:vA/dFbWmbvb7NJ7Gs+iHjuqa4Sx+O9nUSFp9T7fV/rI=
+github.com/sgs921107/gcommon v0.0.0-20201214023325-f1c7f9815c0b h1:TbHPRrUiQzd58KIOxSwrYt/13C9dduZ46T0GSzSUDU4=
+github.com/sgs921107/gcommon v0.0.0-20201214023325-f1c7f9815c0b/go.mod h1:vA/dFbWmbvb7NJ7Gs+iHjuqa4Sx+O9nUSFp9T7fV/rI=
+github.com/sgs921107/gredis v0.0.0-20201212061037-5b1934d6c996 h1:RWt1uw0rgV3ews5iiH0hHwXfiNTS5C7uQxDdiR6+6F8=
+github.com/sgs921107/gredis v0.0.0-20201212061037-5b1934d6c996/go.mod h1:Hkq0RHzcQIK00bmWb2ZGUYMARnohr6vLCNlKIho9CF8=
+github.com/sgs921107/gredis v0.0.0-20201214041554-3ed0ddf86aed h1:lS9ukgvE2DtM58nt6+QS21GIJZTcDq70mzyCTNynpmY=
+github.com/sgs921107/gredis v0.0.0-20201214041554-3ed0ddf86aed/go.mod h1:Hkq0RHzcQIK00bmWb2ZGUYMARnohr6vLCNlKIho9CF8=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/temoto/robotstxt v1.1.1 h1:Gh8RCs8ouX3hRSxxK7B1mO5RFByQ4CmJZDwgom++JaA=
