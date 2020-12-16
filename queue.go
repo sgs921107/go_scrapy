@@ -8,6 +8,7 @@
 此代码copy自colly中的queue.go
 对colly中的queue进行调整,使queue可多次运行run方法
 */
+
 package gspider
 
 import (
@@ -61,7 +62,7 @@ type inMemoryQueueItem struct {
 	Next    *inMemoryQueueItem
 }
 
-// New creates a new queue with a Storage specified in argument
+// NewQueue creates a new queue with a Storage specified in argument
 // A standard InMemoryQueueStorage is used if Storage argument is nil.
 func NewQueue(threads int, s Storage) (*Queue, error) {
 	if s == nil {

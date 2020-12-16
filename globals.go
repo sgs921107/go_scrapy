@@ -8,6 +8,8 @@
 package gspider
 
 const (
+	// ON true
 	ON  = true
+	// OFF false
 	OFF = false
 )

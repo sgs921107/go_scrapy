@@ -15,12 +15,18 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
+/*
+SimpleSpider 普通的spider
+*/
 type SimpleSpider struct {
 	BaseSpider
 	Urls  []string
 	Queue *Queue
 }
 
+/*
+Start 启动
+*/
 func (s *SimpleSpider) Start() {
 	s.BaseSpider.Start()
 	defer func() {
@@ -34,10 +40,16 @@ func (s *SimpleSpider) Start() {
 	s.Collector.Wait()
 }
 
+/*
+Close close
+*/
 func (s *SimpleSpider) Close() {
 	s.BaseSpider.Close()
 }
 
+/*
+Init 初始化
+*/
 func (s *SimpleSpider) Init() {
 	storage := &InMemoryQueueStorage{MaxSize: 10000}
 	q, _ := NewQueue(s.settings.ConcurrentReqs, storage)
@@ -45,6 +57,9 @@ func (s *SimpleSpider) Init() {
 	s.BaseSpider.Init()
 }
 
+/*
+NewSimpleSpider 实例化spider
+*/
 func NewSimpleSpider(urls []string, settings *SpiderSettings) *SimpleSpider {
 	spider := &SimpleSpider{
 		BaseSpider: BaseSpider{

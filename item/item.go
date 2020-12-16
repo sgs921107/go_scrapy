@@ -18,16 +18,19 @@ import (
 	"reflect"
 )
 
-var ItemToMapError = errors.New("ItemToMapError: item must be a struct")
+// ErrorItemToMap item转map失败
+var ErrorItemToMap = errors.New("ItemToMapError: item must be a struct")
 
-type ItemMap map[string]interface{}
+// Map 定义ItemMap类型
+type Map map[string]interface{}
 
-func ItemToMap(item interface{}) (ItemMap, error) {
+// ToMap item to map
+func ToMap(item interface{}) (Map, error) {
 	t := reflect.TypeOf(item)
 	if t.Kind() != reflect.Struct {
-		return nil, ItemToMapError
+		return nil, ErrorItemToMap
 	}
-	data := make(ItemMap)
+	data := make(Map)
 	d := reflect.ValueOf(item)
 	for i := 0; i < d.NumField(); i++ {
 		data[t.Field(i).Name] = d.Field(i)
@@ -35,7 +38,8 @@ func ItemToMap(item interface{}) (ItemMap, error) {
 	return data, nil
 }
 
-func ItemToJson(item interface{}) ([]byte, error) {
+// ToJSON item to json
+func ToJSON(item interface{}) ([]byte, error) {
 	return json.Marshal(&item)
 }
 
@@ -44,6 +48,7 @@ type itemDemo struct {
 	Age  int
 }
 
-func (i itemDemo) ToJson() ([]byte, error) {
-	return ItemToJson(i)
+// ToJson 转json
+func (i itemDemo) ToJSON() ([]byte, error) {
+	return ToJSON(i)
 }

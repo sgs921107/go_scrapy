@@ -21,18 +21,27 @@ import (
 
 // 起别名
 type (
+	// Request          = colly.Request
 	Request          = colly.Request
+	// Response         = colly.Response
 	Response         = colly.Response
+	// Context          = colly.Context
 	Context          = colly.Context
+	// ProxyFunc        = colly.ProxyFunc
 	ProxyFunc        = colly.ProxyFunc
+	// RequestCallback  = colly.RequestCallback
 	RequestCallback  = colly.RequestCallback
+	// ResponseCallback = colly.ResponseCallback
 	ResponseCallback = colly.ResponseCallback
+	// HTMLCallback     = colly.HTMLCallback
 	HTMLCallback     = colly.HTMLCallback
+	// XMLCallback      = colly.XMLCallback
 	XMLCallback      = colly.XMLCallback
+	// ScrapedCallback  = colly.ScrapedCallback
 	ScrapedCallback  = colly.ScrapedCallback
 )
 
-// spider结构
+// BaseSpider spider结构
 type BaseSpider struct {
 	Collector      *colly.Collector
 	settings       *SpiderSettings
@@ -45,6 +54,7 @@ type BaseSpider struct {
 	exit           uint32
 }
 
+// Start 启动方法
 func (s *BaseSpider) Start() {
 	s.Logger.Print("==========================spider start====================================")
 }
@@ -80,15 +90,12 @@ func (s *BaseSpider) showCounter() {
 	}
 }
 
-// 配置http配置
-func (s *BaseSpider) SetHttp() {
-	s.Collector.WithTransport(&http.Transport{
-		DisableKeepAlives: s.settings.KeepAlive,
-		MaxIdleConns:      s.settings.MaxConns,
-	})
+// SetHTTP http配置
+func (s *BaseSpider) SetHTTP(transport *http.Transport) {
+	s.Collector.WithTransport(transport)
 }
 
-// 配置扩展 自动添加user agent、referer
+// SetExtensions 配置扩展 自动添加user agent、referer
 func (s *BaseSpider) SetExtensions() {
 	// 自动添加随机生成的user agent
 	extensions.RandomUserAgent(s.Collector)
@@ -96,34 +103,42 @@ func (s *BaseSpider) SetExtensions() {
 	extensions.Referer(s.Collector)
 }
 
+// OnRequest 发送请求前执行
 func (s *BaseSpider) OnRequest(f RequestCallback) {
 	s.Collector.OnRequest(f)
 }
 
+// OnError 出错时执行
 func (s *BaseSpider) OnError(f func(r *Response, err error)) {
 	s.Collector.OnError(f)
 }
 
+// OnResponseHeaders 接收resp headers后执行
 func (s *BaseSpider) OnResponseHeaders(f colly.ResponseHeadersCallback) {
 	s.Collector.OnResponseHeaders(f)
 }
 
+// OnResponse 接收resp后执行
 func (s *BaseSpider) OnResponse(f ResponseCallback) {
 	s.Collector.OnResponse(f)
 }
 
+// OnHTML resp是html
 func (s *BaseSpider) OnHTML(goquerySelector string, f HTMLCallback) {
 	s.Collector.OnHTML(goquerySelector, f)
 }
 
+// OnXML 页面是XML时执行
 func (s *BaseSpider) OnXML(goquerySelector string, f XMLCallback) {
 	s.Collector.OnXML(goquerySelector, f)
 }
 
+// OnScraped 请求任务结束后执行
 func (s *BaseSpider) OnScraped(f ScrapedCallback) {
 	s.Collector.OnScraped(f)
 }
 
+// Post 发送一个post请求
 func (s *BaseSpider) Post(url string, data map[string]string) error {
 	if err := s.Collector.Post(url, data); err != nil {
 		s.Logger.Printf("HttpError: url: %s, data %v, err msg: %s", url, data, err.Error())
@@ -132,6 +147,7 @@ func (s *BaseSpider) Post(url string, data map[string]string) error {
 	return nil
 }
 
+// PostMult 发送一个post请求
 func (s *BaseSpider) PostMult(url string, data map[string][]byte) error {
 	if err := s.Collector.PostMultipart(url, data); err != nil {
 		s.Logger.Printf("HttpError: url: %s, data %v, err msg: %s", url, data, err.Error())
@@ -140,19 +156,22 @@ func (s *BaseSpider) PostMult(url string, data map[string][]byte) error {
 	return nil
 }
 
+// Cookies 获取cookies
 func (s *BaseSpider) Cookies(url string) []*http.Cookie {
 	return s.Collector.Cookies(url)
 }
 
+// SetProxy 设置代理
 func (s *BaseSpider) SetProxy(proxyURL string) error {
 	return s.Collector.SetProxy(proxyURL)
 }
 
+// SetProxyFunc 设置代理方法
 func (s *BaseSpider) SetProxyFunc(f ProxyFunc) {
 	s.Collector.SetProxyFunc(f)
 }
 
-// 给spider配置一个logger
+// SetLogger 给spider配置一个logger
 func (s *BaseSpider) SetLogger() {
 	if s.settings.LogFile != "" {
 		output, err := os.OpenFile(s.settings.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
@@ -176,14 +195,18 @@ func (s *BaseSpider) SetLogger() {
 	}
 }
 
-// 加载配置
+// LoadSettings 加载配置
 func (s *BaseSpider) LoadSettings() {
 	// 配置最大深度
 	s.Collector.MaxDepth = s.settings.MaxDepth
 	// 配置是否可重复抓取
 	s.Collector.AllowURLRevisit = s.settings.DontFilter
+	transport := &http.Transport{
+		DisableKeepAlives: s.settings.KeepAlive,
+		MaxIdleConns:      s.settings.MaxConns,
+	}
 	// http 配置
-	s.SetHttp()
+	s.SetHTTP(transport)
 	// 配置是否启用异步
 	s.Collector.Async = s.settings.Async
 	// 设置timeout
@@ -195,7 +218,7 @@ func (s *BaseSpider) LoadSettings() {
 	s.SetLogger()
 }
 
-// 初始化工作
+// Init 初始化工作
 func (s *BaseSpider) Init() {
 	s.LoadSettings()
 	s.SetExtensions()
@@ -207,7 +230,7 @@ func (s *BaseSpider) Init() {
 	// })
 }
 
-// 释放资源
+// Close 释放资源
 func (s *BaseSpider) Close() {
 	atomic.StoreUint32(&s.exit, 1)
 	s.Logger.Print("==========================spider close====================================")

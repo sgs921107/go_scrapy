@@ -7,9 +7,7 @@
 
 package gspider
 
-type RedisParamsType struct {
-}
-
+// SpiderSettings spider settings
 type SpiderSettings struct {
 	Debug          bool
 	LogFile        string
@@ -33,7 +31,7 @@ type SpiderSettings struct {
 	MaxIdleTimeout int // 最大闲置时间, redis spider使用 0表示一直运行
 }
 
-// spider setings实例的demo
+// DemoSettings spider setings实例的demo
 var DemoSettings = SpiderSettings{
 	Debug: ON,
 	// 是否在启动前清空之前的数据

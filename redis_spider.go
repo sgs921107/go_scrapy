@@ -23,7 +23,9 @@ import (
 	"time"
 )
 
-// redis spider
+/*
+RedisSpider redis spider
+*/
 type RedisSpider struct {
 	BaseSpider
 	RedisKey string
@@ -33,8 +35,10 @@ type RedisSpider struct {
 	wg       *sync.WaitGroup
 }
 
-// 监听start_urls队列
-func (s *RedisSpider) ListenStartUrls() {
+/*
+listenStartURLs监听start_urls队列
+*/
+func (s *RedisSpider) listenStartURLs() {
 	defer s.wg.Done()
 	for {
 		if atomic.LoadUint32(&s.exit) != 0 {
@@ -49,12 +53,14 @@ func (s *RedisSpider) ListenStartUrls() {
 	}
 }
 
-// 启动redis spider
+/*
+Start 启动redis spider
+*/
 func (s *RedisSpider) Start() {
 	s.BaseSpider.Start()
 	defer s.Close()
 	s.wg.Add(1)
-	go s.ListenStartUrls()
+	go s.listenStartURLs()
 	for {
 		s.Queue.Run(s.Collector)
 		s.Collector.Wait()
@@ -77,11 +83,16 @@ func (s *RedisSpider) Start() {
 	}
 }
 
+/*
+recordLastTime 记录最后一个请求发出的时间
+*/
 func (s *RedisSpider) recordLastTime(*Request) {
 	atomic.StoreInt64(&s.last, gcommon.TimeStamp(0))
 }
 
-// 释放资源
+/*
+Close 释放资源
+*/
 func (s *RedisSpider) Close() {
 	s.Client.Close()
 	s.BaseSpider.Close()
@@ -89,7 +100,9 @@ func (s *RedisSpider) Close() {
 	s.wg.Wait()
 }
 
-// 配置使用redis存储
+/*
+Init 配置使用redis存储
+*/
 func (s *RedisSpider) Init() {
 	storage := &redisstorage.Storage{
 		Address:  s.settings.RedisAddr,
@@ -118,7 +131,9 @@ func (s *RedisSpider) Init() {
 	s.BaseSpider.Init()
 }
 
-// 生成一个redis spider实例
+/*
+NewRedisSpider 生成一个redis spider实例
+*/
 func NewRedisSpider(redisKey string, settings *SpiderSettings) *RedisSpider {
 	// default redisKey
 	if redisKey == "" {

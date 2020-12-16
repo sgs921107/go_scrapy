@@ -11,6 +11,7 @@ import (
 	"github.com/sgs921107/gspider"
 )
 
+// settings
 var settings = &gspider.SpiderSettings{
 	Debug: true,
 	// 是否在启动前清空之前的数据

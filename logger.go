@@ -13,6 +13,7 @@ import (
 	"os"
 )
 
+// Logging logging
 type Logging struct {
 	Output io.Writer
 	Prefix string
@@ -20,6 +21,7 @@ type Logging struct {
 	logger *log.Logger
 }
 
+// GetLogger  get a logger
 func (l *Logging) GetLogger() *log.Logger {
 	if l.Output == nil {
 		l.Output = os.Stderr
@@ -28,6 +30,7 @@ func (l *Logging) GetLogger() *log.Logger {
 	return l.logger
 }
 
+// NewLogger 实例化一个logger
 func NewLogger(output io.Writer, prefix string, flag int) *log.Logger {
 	if flag == 0 {
 		flag = log.Ldate | log.Ltime
