@@ -7,11 +7,20 @@
 
 package gspider
 
+import (
+	"time"
+)
+
 // SpiderSettings spider settings
 type SpiderSettings struct {
 	Debug         	bool
-	LogFile       	string
 	LogLevel		string 
+	// 为空则输出至stdout
+	LogFile       	string
+	// 日志文件多久轮转一次
+	RotationTime	time.Duration
+	// 日志文件最大保存多久时间
+	RotationMaxAge	time.Duration
 	FlushOnStart  	bool // 开始前清空之前的数据
 	UserAgent     	string
 	ConcurrentReqs	int  // 并发
@@ -20,14 +29,14 @@ type SpiderSettings struct {
 	EnableCookies 	bool // 启用cookies
 	Async         	bool // 启用异步
 	KeepAlive     	bool
-	Timeout       	int
+	Timeout       	time.Duration
 	MaxConns      	int
 	// 以下使用redis s	ider时需要配置
 	RedisAddr     	string
 	RedisDB       	int
 	RedisPassword 	string
 	RedisPrefix   	string
-	MaxIdleTimeout	int // 最大闲置时间, redis spider使用 0表示一直运行
+	MaxIdleTimeout	time.Duration // 最大闲置时间, redis spider使用 0表示一直运行
 }
 
 // DemoSettings spider setings实例的demo
@@ -48,8 +57,8 @@ var DemoSettings = SpiderSettings{
 	EnableCookies: OFF,
 	// 是否开启长连接 bool
 	KeepAlive: OFF,
-	// 超时  单位：秒
-	Timeout: 30,
+	// 超时
+	Timeout: 30 * time.Second,
 	// 最大连接数
 	MaxConns: 100,
 	// redis配置
