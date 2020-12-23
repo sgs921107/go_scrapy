@@ -40,13 +40,15 @@ type (
 	ScrapedCallback  = colly.ScrapedCallback
 	// LogFields logrus fields
 	LogFields		 = glogging.Fields
+	// Logger logrus logger
+	Logger			 = glogging.Logger
 )
 
 // BaseSpider spider结构
 type BaseSpider struct {
 	Collector      *colly.Collector
 	settings       *SpiderSettings
-	Logger         *glogging.Logger
+	Logger         *Logger
 	curReqCounter  int64
 	curRespCounter int64
 	reqCounter     int64
