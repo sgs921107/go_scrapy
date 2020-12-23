@@ -18,8 +18,6 @@ var settings = &gspider.SpiderSettings{
 	Debug: true,
 	// 是否在启动前清空之前的数据
 	FlushOnStart: true,
-	// UserAgent bool
-	UserAgent:      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36",
 	ConcurrentReqs: 16,
 	// 最大深度
 	MaxDepth: 1,

@@ -22,7 +22,6 @@ type SpiderSettings struct {
 	// 日志文件最大保存多久时间
 	RotationMaxAge	time.Duration
 	FlushOnStart  	bool // 开始前清空之前的数据
-	UserAgent     	string
 	ConcurrentReqs	int  // 并发
 	MaxDepth      	int  // 最大深度
 	DontFilter    	bool // 不过滤
@@ -44,8 +43,6 @@ var DemoSettings = SpiderSettings{
 	Debug: ON,
 	// 是否在启动前清空之前的数据
 	FlushOnStart: OFF,
-	// UserAgent bool
-	UserAgent:      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36",
 	ConcurrentReqs: 16,
 	// 最大深度
 	MaxDepth: 1,
