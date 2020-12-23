@@ -11,9 +11,8 @@ import (
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/debug"
 	"github.com/gocolly/colly/v2/extensions"
-	"log"
+	"github.com/sgs921107/glogging"
 	"net/http"
-	"os"
 	"runtime"
 	"sync/atomic"
 	"time"
@@ -45,8 +44,7 @@ type (
 type BaseSpider struct {
 	Collector      *colly.Collector
 	settings       *SpiderSettings
-	Logger         *log.Logger
-	output         *os.File
+	Logger         *glogging.Logger
 	curReqCounter  int64
 	curRespCounter int64
 	reqCounter     int64
@@ -173,24 +171,14 @@ func (s *BaseSpider) SetProxyFunc(f ProxyFunc) {
 
 // SetLogger 给spider配置一个logger
 func (s *BaseSpider) SetLogger() {
-	if s.settings.LogFile != "" {
-		output, err := os.OpenFile(s.settings.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			panic(err)
-		}
-		s.output = output
-	} else {
-		s.output = os.Stderr
-	}
-	prefix := s.settings.LogPrefix
-	flag := s.settings.LogFlag
-	s.Logger = NewLogger(s.output, prefix, flag)
+	s.Logger = glogging.NewLogging(&glogging.Options{
+		Level: s.settings.LogLevel,
+		FilePath: s.settings.LogFile,
+	}).GetLogger()
 	// 配置debugger
 	if s.settings.Debug == true {
 		s.Collector.SetDebugger(&debug.LogDebugger{
-			Output: s.output,
-			Prefix: prefix,
-			Flag:   flag,
+			Output: s.Logger.Out,
 		})
 	}
 }
@@ -234,9 +222,6 @@ func (s *BaseSpider) Init() {
 func (s *BaseSpider) Close() {
 	atomic.StoreUint32(&s.exit, 1)
 	s.Logger.Print("==========================spider close====================================")
-	if s.output != nil {
-		s.output.Close()
-	}
 }
 
 func init() {

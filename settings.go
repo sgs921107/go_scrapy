@@ -9,26 +9,25 @@ package gspider
 
 // SpiderSettings spider settings
 type SpiderSettings struct {
-	Debug          bool
-	LogFile        string
-	LogPrefix      string
-	LogFlag        int
-	FlushOnStart   bool // 开始前清空之前的数据
-	UserAgent      string
-	ConcurrentReqs int  // 并发
-	MaxDepth       int  // 最大深度
-	DontFilter     bool // 不过滤
-	EnableCookies  bool // 启用cookies
-	Async          bool // 启用异步
-	KeepAlive      bool
-	Timeout        int
-	MaxConns       int
-	// 以下使用redis spider时需要配置
-	RedisAddr      string
-	RedisDB        int
-	RedisPassword  string
-	RedisPrefix    string
-	MaxIdleTimeout int // 最大闲置时间, redis spider使用 0表示一直运行
+	Debug         	bool
+	LogFile       	string
+	LogLevel		string 
+	FlushOnStart  	bool // 开始前清空之前的数据
+	UserAgent     	string
+	ConcurrentReqs	int  // 并发
+	MaxDepth      	int  // 最大深度
+	DontFilter    	bool // 不过滤
+	EnableCookies 	bool // 启用cookies
+	Async         	bool // 启用异步
+	KeepAlive     	bool
+	Timeout       	int
+	MaxConns      	int
+	// 以下使用redis s	ider时需要配置
+	RedisAddr     	string
+	RedisDB       	int
+	RedisPassword 	string
+	RedisPrefix   	string
+	MaxIdleTimeout	int // 最大闲置时间, redis spider使用 0表示一直运行
 }
 
 // DemoSettings spider setings实例的demo
