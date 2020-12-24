@@ -188,7 +188,7 @@ func (s *BaseSpider) LoadSettings() {
 	// 配置是否可重复抓取
 	s.Collector.AllowURLRevisit = s.settings.DontFilter
 	transport := &http.Transport{
-		DisableKeepAlives: s.settings.KeepAlive,
+		DisableKeepAlives: !s.settings.KeepAlive,
 		MaxIdleConns:      s.settings.MaxConns,
 	}
 	// http 配置
