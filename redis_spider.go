@@ -100,7 +100,6 @@ func (s *RedisSpider) Close() {
 Init 配置使用redis存储
 */
 func (s *RedisSpider) Init() {
-	s.BaseSpider.Init()
 	storage := &redisstorage.Storage{
 		Address:  s.settings.RedisAddr,
 		Password: s.settings.RedisPassword,
@@ -108,6 +107,9 @@ func (s *RedisSpider) Init() {
 		Prefix:   s.settings.RedisPrefix,
 	}
 	err := s.Collector.SetStorage(storage)
+	// 下面使用到logger 需先init base spider
+	// 不能在set storage前执行，会导致disable cookies被覆盖
+	s.BaseSpider.Init()
 	if err != nil {
 		s.Logger.WithFields(LogFields{
 			"errMsg": err.Error(),
@@ -120,6 +122,7 @@ func (s *RedisSpider) Init() {
 				"errMsg": err.Error(),
 			}).Error("clear previous data of redis storage failed")
 		}
+		s.Client.Del(s.RedisKey)
 	}
 	q, _ := NewQueue(s.settings.ConcurrentReqs, storage)
 	s.Queue = q
