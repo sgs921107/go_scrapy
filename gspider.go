@@ -189,7 +189,6 @@ func (s *BaseSpider) LoadSettings() {
 	s.Collector.AllowURLRevisit = s.settings.DontFilter
 	transport := &http.Transport{
 		DisableKeepAlives: !s.settings.KeepAlive,
-		MaxIdleConns:      s.settings.MaxConns,
 	}
 	// http 配置
 	s.SetHTTP(transport)

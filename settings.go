@@ -29,7 +29,6 @@ type SpiderSettings struct {
 	Async         	bool // 启用异步
 	KeepAlive     	bool
 	Timeout       	time.Duration
-	MaxConns      	int
 	// 以下使用redis s	ider时需要配置
 	RedisAddr     	string
 	RedisDB       	int
@@ -56,8 +55,6 @@ var DemoSettings = SpiderSettings{
 	KeepAlive: OFF,
 	// 超时
 	Timeout: 30 * time.Second,
-	// 最大连接数
-	MaxConns: 100,
 	// redis配置
 	RedisAddr:     "127.0.0.1:6379",
 	RedisDB:       0,
