@@ -14,34 +14,8 @@ package item
 
 import (
 	"encoding/json"
-	"errors"
-	"reflect"
+	"github.com/sgs921107/gcommon"
 )
-
-// ErrorItemToMap item转map失败
-var ErrorItemToMap = errors.New("ItemToMapError: item must be a struct")
-
-// Map 定义ItemMap类型
-type Map map[string]interface{}
-
-// ToMap item to map
-func ToMap(item interface{}) (Map, error) {
-	t := reflect.TypeOf(item)
-	if t.Kind() != reflect.Struct {
-		return nil, ErrorItemToMap
-	}
-	data := make(Map)
-	d := reflect.ValueOf(item)
-	for i := 0; i < d.NumField(); i++ {
-		data[t.Field(i).Name] = d.Field(i)
-	}
-	return data, nil
-}
-
-// ToJSON item to json
-func ToJSON(item interface{}) ([]byte, error) {
-	return json.Marshal(&item)
-}
 
 type itemDemo struct {
 	Name string
@@ -49,6 +23,11 @@ type itemDemo struct {
 }
 
 // ToJson 转json
-func (i itemDemo) ToJSON() ([]byte, error) {
-	return ToJSON(i)
+func (i *itemDemo) ToJSON() ([]byte, error) {
+	return json.Marshal(i)
+}
+
+// ToMapSA to msp[string]interface{}
+func (i *itemDemo) ToMapSA() (gcommon.MapSA, error) {
+	return gcommon.StructToMapSA(*i)
 }
