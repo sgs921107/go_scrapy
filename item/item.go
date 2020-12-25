@@ -28,6 +28,6 @@ func (i *itemDemo) ToJSON() ([]byte, error) {
 }
 
 // ToMapSA to msp[string]interface{}
-func (i *itemDemo) ToMapSA() (gcommon.MapSA, error) {
-	return gcommon.StructToMapSA(*i)
+func (i itemDemo) ToMapSA() (gcommon.MapSA, error) {
+	return gcommon.StructToMapSA(i)
 }
