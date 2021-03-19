@@ -8,16 +8,16 @@
 package main
 
 import (
-	"time"
 	"github.com/sgs921107/gspider"
 	"sync"
+	"time"
 )
 
 // settings
 var settings = &gspider.SpiderSettings{
 	Debug: true,
 	// 是否在启动前清空之前的数据
-	FlushOnStart: true,
+	FlushOnStart:   true,
 	ConcurrentReqs: 16,
 	// 最大深度
 	MaxDepth: 1,
@@ -30,9 +30,7 @@ var settings = &gspider.SpiderSettings{
 	// 是否开启长连接 bool
 	KeepAlive: false,
 	// 超时  单位：秒
-	Timeout: time.Second * 10,
-	// 最大连接数
-	MaxConns:       100,
+	Timeout:        time.Second * 10,
 	RedisAddr:      "172.17.0.1:6379",
 	RedisDB:        6,
 	RedisPassword:  "qaz123",
@@ -65,7 +63,7 @@ func main() {
 	spider.OnRequest(func(r *gspider.Request) {
 		spider.Logger.WithFields(gspider.LogFields{
 			"method": r.Method,
-			"url": r.URL,
+			"url":    r.URL,
 		}).Info("send a req")
 	})
 	spider.OnResponse(func(r *gspider.Response) {
