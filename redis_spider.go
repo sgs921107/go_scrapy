@@ -65,14 +65,10 @@ func (s *RedisSpider) Start() {
 		s.Queue.Run(s.Collector)
 		s.Collector.Wait()
 		if s.settings.MaxIdleTimeout != 0 {
-			now := gcommon.TimeStamp(0)
+			// 纳秒时间戳
+			now := gcommon.TimeStamp(3)
 			// 超出最大闲置时间则退出
-			maxIdleTimeout := int64(s.settings.MaxIdleTimeout)
-			// 如果最大闲置时间配置过小，保证所有发出的请求已结束
-			if maxIdleTimeout <= int64(s.settings.Timeout) {
-				maxIdleTimeout += int64(s.settings.Timeout)
-			}
-			if now-atomic.LoadInt64(&s.last) > maxIdleTimeout {
+			if now-atomic.LoadInt64(&s.last) > int64(s.settings.MaxIdleTimeout) {
 				break
 			}
 		}
@@ -87,7 +83,7 @@ func (s *RedisSpider) Start() {
 recordLastTime 记录最后一个请求发出的时间
 */
 func (s *RedisSpider) recordLastTime(*Request) {
-	atomic.StoreInt64(&s.last, gcommon.TimeStamp(0))
+	atomic.StoreInt64(&s.last, gcommon.TimeStamp(3))
 }
 
 /*
@@ -111,24 +107,30 @@ func (s *RedisSpider) Init() {
 		Prefix:   s.settings.RedisPrefix,
 	}
 	err := s.Collector.SetStorage(storage)
+	// 下面使用到logger 需先init base spider
+	// 不能在set storage前执行，会导致disable cookies被覆盖
+	s.BaseSpider.Init()
 	if err != nil {
-		s.Logger.Fatalf("set redis storage failed: %s", err.Error())
-		panic(err)
+		s.Logger.WithFields(LogFields{
+			"errMsg": err.Error(),
+		}).Fatal("Set redis storage failed")
 	}
 	s.Client = gredis.NewClientFromRedisClient(storage.Client)
 	if s.settings.FlushOnStart {
 		if err := storage.Clear(); err != nil {
-			s.Logger.Fatal("clear previous data of redis storage failed: " + err.Error())
+			s.Logger.WithFields(LogFields{
+				"errMsg": err.Error(),
+			}).Error("clear previous data of redis storage failed")
 		}
+		s.Client.Del(s.RedisKey)
 	}
 	q, _ := NewQueue(s.settings.ConcurrentReqs, storage)
 	s.Queue = q
 	// 如果配置了最大闲置时间
 	if s.settings.MaxIdleTimeout != 0 {
 		s.OnRequest(s.recordLastTime)
-		atomic.StoreInt64(&s.last, gcommon.TimeStamp(0))
+		atomic.StoreInt64(&s.last, gcommon.TimeStamp(3))
 	}
-	s.BaseSpider.Init()
 }
 
 /*

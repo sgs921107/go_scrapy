@@ -11,9 +11,8 @@ import (
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/debug"
 	"github.com/gocolly/colly/v2/extensions"
-	"log"
+	"github.com/sgs921107/glogging"
 	"net/http"
-	"os"
 	"runtime"
 	"sync/atomic"
 	"time"
@@ -39,14 +38,17 @@ type (
 	XMLCallback      = colly.XMLCallback
 	// ScrapedCallback  = colly.ScrapedCallback
 	ScrapedCallback  = colly.ScrapedCallback
+	// LogFields logrus fields
+	LogFields		 = glogging.Fields
+	// Logger logrus logger
+	Logger			 = glogging.Logger
 )
 
 // BaseSpider spider结构
 type BaseSpider struct {
 	Collector      *colly.Collector
 	settings       *SpiderSettings
-	Logger         *log.Logger
-	output         *os.File
+	Logger         *Logger
 	curReqCounter  int64
 	curRespCounter int64
 	reqCounter     int64
@@ -56,7 +58,7 @@ type BaseSpider struct {
 
 // Start 启动方法
 func (s *BaseSpider) Start() {
-	s.Logger.Print("==========================spider start====================================")
+	s.Logger.Info("==========================spider start====================================")
 }
 
 // 给请求计数器追加1
@@ -79,7 +81,7 @@ func (s *BaseSpider) showCounter() {
 		}
 		select {
 		case <-ticker.C:
-			s.Logger.Printf(
+			s.Logger.Infof(
 				"----------------------crawled (%d/%d), (%d/%d)/min------------------------",
 				atomic.LoadInt64(&s.reqCounter),
 				atomic.LoadInt64(&s.respCounter),
@@ -140,20 +142,12 @@ func (s *BaseSpider) OnScraped(f ScrapedCallback) {
 
 // Post 发送一个post请求
 func (s *BaseSpider) Post(url string, data map[string]string) error {
-	if err := s.Collector.Post(url, data); err != nil {
-		s.Logger.Printf("HttpError: url: %s, data %v, err msg: %s", url, data, err.Error())
-		return err
-	}
-	return nil
+	return s.Collector.Post(url, data)
 }
 
 // PostMult 发送一个post请求
 func (s *BaseSpider) PostMult(url string, data map[string][]byte) error {
-	if err := s.Collector.PostMultipart(url, data); err != nil {
-		s.Logger.Printf("HttpError: url: %s, data %v, err msg: %s", url, data, err.Error())
-		return err
-	}
-	return nil
+	return s.Collector.PostMultipart(url, data)
 }
 
 // Cookies 获取cookies
@@ -173,24 +167,16 @@ func (s *BaseSpider) SetProxyFunc(f ProxyFunc) {
 
 // SetLogger 给spider配置一个logger
 func (s *BaseSpider) SetLogger() {
-	if s.settings.LogFile != "" {
-		output, err := os.OpenFile(s.settings.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			panic(err)
-		}
-		s.output = output
-	} else {
-		s.output = os.Stderr
-	}
-	prefix := s.settings.LogPrefix
-	flag := s.settings.LogFlag
-	s.Logger = NewLogger(s.output, prefix, flag)
+	s.Logger = glogging.NewLogging(&glogging.Options{
+		Level: s.settings.LogLevel,
+		FilePath: s.settings.LogFile,
+		RotationTime: s.settings.RotationTime,
+		RotationMaxAge: s.settings.RotationMaxAge,
+	}).GetLogger()
 	// 配置debugger
 	if s.settings.Debug == true {
 		s.Collector.SetDebugger(&debug.LogDebugger{
-			Output: s.output,
-			Prefix: prefix,
-			Flag:   flag,
+			Output: s.Logger.Out,
 		})
 	}
 }
@@ -202,15 +188,14 @@ func (s *BaseSpider) LoadSettings() {
 	// 配置是否可重复抓取
 	s.Collector.AllowURLRevisit = s.settings.DontFilter
 	transport := &http.Transport{
-		DisableKeepAlives: s.settings.KeepAlive,
-		MaxIdleConns:      s.settings.MaxConns,
+		DisableKeepAlives: !s.settings.KeepAlive,
 	}
 	// http 配置
 	s.SetHTTP(transport)
 	// 配置是否启用异步
 	s.Collector.Async = s.settings.Async
 	// 设置timeout
-	s.Collector.SetRequestTimeout(time.Duration(s.settings.Timeout) * time.Second)
+	s.Collector.SetRequestTimeout(s.settings.Timeout)
 	// 配置是否启用cookies
 	if s.settings.EnableCookies == OFF {
 		s.Collector.DisableCookies()
@@ -220,6 +205,10 @@ func (s *BaseSpider) LoadSettings() {
 
 // Init 初始化工作
 func (s *BaseSpider) Init() {
+	// 如果最大闲置时间配置过小，保证所有发出的请求已结束
+	if s.settings.MaxIdleTimeout != 0 && s.settings.MaxIdleTimeout <= s.settings.Timeout {
+		s.settings.MaxIdleTimeout += s.settings.Timeout
+	}
 	s.LoadSettings()
 	s.SetExtensions()
 	s.OnRequest(s.recordReq)
@@ -233,10 +222,7 @@ func (s *BaseSpider) Init() {
 // Close 释放资源
 func (s *BaseSpider) Close() {
 	atomic.StoreUint32(&s.exit, 1)
-	s.Logger.Print("==========================spider close====================================")
-	if s.output != nil {
-		s.output.Close()
-	}
+	s.Logger.Info("==========================spider close====================================")
 }
 
 func init() {

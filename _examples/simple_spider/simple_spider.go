@@ -8,6 +8,7 @@
 package main
 
 import (
+	"time"
 	"github.com/sgs921107/gspider"
 )
 
@@ -15,8 +16,6 @@ var settings = &gspider.SpiderSettings{
 	Debug: true,
 	// 是否在启动前清空之前的数据
 	FlushOnStart: true,
-	// UserAgent bool
-	UserAgent:      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36",
 	ConcurrentReqs: 16,
 	// 最大深度
 	MaxDepth: 1,
@@ -29,7 +28,7 @@ var settings = &gspider.SpiderSettings{
 	// 是否开启长连接 bool
 	KeepAlive: false,
 	// 超时  单位：秒
-	Timeout: 30,
+	Timeout: 30 * time.Second,
 	// 最大连接数
 	MaxConns: 100,
 }
@@ -45,10 +44,15 @@ func main() {
 	}
 	spider := gspider.NewSimpleSpider(urls, settings)
 	spider.OnRequest(func(r *gspider.Request) {
-		spider.Logger.Printf("create a task: %s %s", r.Method, r.URL)
+		spider.Logger.WithFields(gspider.LogFields{
+			"method": r.Method,
+			"url": r.URL,
+		}).Info("send a req")
 	})
 	spider.OnResponse(func(r *gspider.Response) {
-		spider.Logger.Printf("recv a resp: %s", r.Request.URL)
+		spider.Logger.WithFields(gspider.LogFields{
+			"url": r.Request.URL,
+		}).Info("recv a resp")
 	})
 	spider.Start()
 }
