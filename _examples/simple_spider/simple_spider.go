@@ -9,31 +9,27 @@ package main
 
 import (
 	"github.com/sgs921107/gspider"
-	"time"
+	"github.com/sgs921107/gcommon"
+	"sync"
 )
 
-var settings = &gspider.SpiderSettings{
-	Debug: true,
-	// 是否在启动前清空之前的数据
-	FlushOnStart:   true,
-	ConcurrentReqs: 16,
-	// 最大深度
-	MaxDepth: 1,
-	// 不过滤
-	DontFilter: false,
-	// 启用异步
-	Async: true,
-	// 不启用cookies
-	EnableCookies: false,
-	// 是否开启长连接 bool
-	KeepAlive: false,
-	// 超时  单位：秒
-	Timeout: 30 * time.Second,
+var (
+	settings = gspider.SpiderSettings{}
+	settingsOnce sync.Once
+)
+
+
+func newSettings() gspider.SpiderSettings {
+	settingsOnce.Do(func(){
+		gcommon.LoadEnvFile("env_demo", true)
+		gcommon.EnvIgnorePrefix()
+		gcommon.EnvFill(&settings)
+	})
+	return settings
 }
 
-var redisKey = "start_urls"
-
 func main() {
+	settings := newSettings()
 	urls := []string{
 		"http://httpbin.org/",
 		"http://httpbin.org/ip",

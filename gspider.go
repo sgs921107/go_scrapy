@@ -47,49 +47,14 @@ type (
 // BaseSpider spider结构
 type BaseSpider struct {
 	Collector      *colly.Collector
-	settings       *SpiderSettings
+	settings       SpiderSettings
 	Logger         *Logger
-	curReqCounter  int64
-	curRespCounter int64
-	reqCounter     int64
-	respCounter    int64
 	exit           uint32
 }
 
 // Start 启动方法
 func (s *BaseSpider) Start() {
 	s.Logger.Info("==========================spider start====================================")
-}
-
-// 给请求计数器追加1
-func (s *BaseSpider) recordReq(*Request) {
-	atomic.AddInt64(&s.curReqCounter, 1)
-	atomic.AddInt64(&s.reqCounter, 1)
-}
-
-// 给请求计数器追加1
-func (s *BaseSpider) recordResp(*Response) {
-	atomic.AddInt64(&s.curRespCounter, 1)
-	atomic.AddInt64(&s.respCounter, 1)
-}
-
-func (s *BaseSpider) showCounter() {
-	ticker := time.NewTicker(time.Minute)
-	for {
-		if atomic.LoadUint32(&s.exit) != 0 {
-			break
-		}
-		select {
-		case <-ticker.C:
-			s.Logger.Infof(
-				"----------------------crawled (%d/%d), (%d/%d)/min------------------------",
-				atomic.LoadInt64(&s.reqCounter),
-				atomic.LoadInt64(&s.respCounter),
-				atomic.SwapInt64(&s.curReqCounter, 0),
-				atomic.SwapInt64(&s.curRespCounter, 0),
-			)
-		}
-	}
 }
 
 // SetHTTP http配置
@@ -165,16 +130,21 @@ func (s *BaseSpider) SetProxyFunc(f ProxyFunc) {
 	s.Collector.SetProxyFunc(f)
 }
 
+
+func (s *BaseSpider) AddExtension(extension Extension) {
+	go extension.Run(s)
+}
+
 // SetLogger 给spider配置一个logger
 func (s *BaseSpider) SetLogger() {
 	s.Logger = glogging.NewLogging(&glogging.Options{
-		Level: s.settings.LogLevel,
-		FilePath: s.settings.LogFile,
-		RotationTime: s.settings.RotationTime,
-		RotationMaxAge: s.settings.RotationMaxAge,
+		Level: s.settings.Log.Level,
+		FilePath: s.settings.Log.File,
+		RotationTime: time.Duration(s.settings.Log.RotationTime) * time.Hour,
+		RotationMaxAge: time.Duration(s.settings.Log.RotationMaxAge) * time.Hour,
 	}).GetLogger()
 	// 配置debugger
-	if s.settings.Debug == true {
+	if s.settings.Spider.Debug == true {
 		s.Collector.SetDebugger(&debug.LogDebugger{
 			Output: s.Logger.Out,
 		})
@@ -184,20 +154,20 @@ func (s *BaseSpider) SetLogger() {
 // LoadSettings 加载配置
 func (s *BaseSpider) LoadSettings() {
 	// 配置最大深度
-	s.Collector.MaxDepth = s.settings.MaxDepth
+	s.Collector.MaxDepth = s.settings.Spider.MaxDepth
 	// 配置是否可重复抓取
-	s.Collector.AllowURLRevisit = s.settings.DontFilter
+	s.Collector.AllowURLRevisit = s.settings.Spider.DontFilter
 	transport := &http.Transport{
-		DisableKeepAlives: !s.settings.KeepAlive,
+		DisableKeepAlives: !s.settings.Spider.KeepAlive,
 	}
 	// http 配置
 	s.SetHTTP(transport)
 	// 配置是否启用异步
-	s.Collector.Async = s.settings.Async
+	s.Collector.Async = s.settings.Spider.Async
 	// 设置timeout
-	s.Collector.SetRequestTimeout(s.settings.Timeout)
+	s.Collector.SetRequestTimeout(time.Duration(s.settings.Spider.Timeout) * time.Second)
 	// 配置是否启用cookies
-	if s.settings.EnableCookies == OFF {
+	if s.settings.Spider.EnableCookies == OFF {
 		s.Collector.DisableCookies()
 	}
 	s.SetLogger()
@@ -206,14 +176,13 @@ func (s *BaseSpider) LoadSettings() {
 // Init 初始化工作
 func (s *BaseSpider) Init() {
 	// 如果最大闲置时间配置过小，保证所有发出的请求已结束
-	if s.settings.MaxIdleTimeout != 0 && s.settings.MaxIdleTimeout <= s.settings.Timeout {
-		s.settings.MaxIdleTimeout += s.settings.Timeout
+	if s.settings.Spider.MaxIdleTimeout != 0 && s.settings.Spider.MaxIdleTimeout <= s.settings.Spider.Timeout {
+		s.settings.Spider.MaxIdleTimeout += s.settings.Spider.Timeout
 	}
 	s.LoadSettings()
 	s.SetExtensions()
-	s.OnRequest(s.recordReq)
-	s.OnResponse(s.recordResp)
-	go s.showCounter()
+	counter_extension := NewCounterExtension()
+	s.AddExtension(counter_extension)
 	// s.OnError(func(r *colly.Response, err error) {
 	// 	log.Printf("HttpError: url: %s, code: %d, err msg: %s", r.Request.URL, r.StatusCode, err.Error())
 	// })

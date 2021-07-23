@@ -9,40 +9,31 @@ package main
 
 import (
 	"github.com/sgs921107/gspider"
+	"github.com/sgs921107/gcommon"
 	"sync"
-	"time"
 )
 
-// settings
-var settings = &gspider.SpiderSettings{
-	Debug: true,
-	// 是否在启动前清空之前的数据
-	FlushOnStart:   true,
-	ConcurrentReqs: 16,
-	// 最大深度
-	MaxDepth: 1,
-	// 不过滤
-	DontFilter: false,
-	// 启用异步
-	Async: true,
-	// 不启用cookies
-	EnableCookies: false,
-	// 是否开启长连接 bool
-	KeepAlive: false,
-	// 超时  单位：秒
-	Timeout:        time.Second * 10,
-	RedisAddr:      "172.17.0.1:6379",
-	RedisDB:        6,
-	RedisPassword:  "qaz123",
-	RedisPrefix:    "simple",
-	MaxIdleTimeout: time.Second * 10,
+
+var (
+	settings = gspider.SpiderSettings{}
+	settingsOnce sync.Once
+)
+
+
+func newSettings() gspider.SpiderSettings {
+	settingsOnce.Do(func(){
+		gcommon.LoadEnvFile("env_demo", true)
+		gcommon.EnvIgnorePrefix()
+		gcommon.EnvFill(&settings)
+	})
+	return settings
 }
 
-var redisKey = "start_urls"
 
 func main() {
 	var wg = &sync.WaitGroup{}
-	spider := gspider.NewRedisSpider(redisKey, settings)
+	var settings = newSettings()
+	spider := gspider.NewRedisSpider(settings)
 	wg.Add(1)
 	// 向rediskey中插入url
 	go func() {

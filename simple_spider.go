@@ -52,7 +52,7 @@ Init 初始化
 */
 func (s *SimpleSpider) Init() {
 	storage := &InMemoryQueueStorage{MaxSize: 10000}
-	q, _ := NewQueue(s.settings.ConcurrentReqs, storage)
+	q, _ := NewQueue(s.settings.Spider.ConcurrentReqs, storage)
 	s.Queue = q
 	s.BaseSpider.Init()
 }
@@ -60,7 +60,7 @@ func (s *SimpleSpider) Init() {
 /*
 NewSimpleSpider 实例化spider
 */
-func NewSimpleSpider(urls []string, settings *SpiderSettings) *SimpleSpider {
+func NewSimpleSpider(urls []string, settings SpiderSettings) *SimpleSpider {
 	spider := &SimpleSpider{
 		BaseSpider: BaseSpider{
 			Collector: colly.NewCollector(),

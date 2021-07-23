@@ -64,11 +64,11 @@ func (s *RedisSpider) Start() {
 	for {
 		s.Queue.Run(s.Collector)
 		s.Collector.Wait()
-		if s.settings.MaxIdleTimeout != 0 {
+		if s.settings.Spider.MaxIdleTimeout != 0 {
 			// 纳秒时间戳
 			now := gcommon.TimeStamp(3)
 			// 超出最大闲置时间则退出
-			if now-atomic.LoadInt64(&s.last) > int64(s.settings.MaxIdleTimeout) {
+			if now-atomic.LoadInt64(&s.last) > int64(s.settings.Spider.MaxIdleTimeout) * int64(time.Second) {
 				break
 			}
 		}
@@ -100,11 +100,12 @@ func (s *RedisSpider) Close() {
 Init 配置使用redis存储
 */
 func (s *RedisSpider) Init() {
+	s.RedisKey = s.settings.Redis.Prefix + ":" + "start_urls"
 	storage := &redisstorage.Storage{
-		Address:  s.settings.RedisAddr,
-		Password: s.settings.RedisPassword,
-		DB:       s.settings.RedisDB,
-		Prefix:   s.settings.RedisPrefix,
+		Address:  s.settings.Redis.Addr,
+		Password: s.settings.Redis.Password,
+		DB:       s.settings.Redis.DB,
+		Prefix:   s.settings.Redis.Prefix,
 	}
 	err := s.Collector.SetStorage(storage)
 	// 下面使用到logger 需先init base spider
@@ -116,7 +117,7 @@ func (s *RedisSpider) Init() {
 		}).Fatal("Set redis storage failed")
 	}
 	s.Client = gredis.NewClientFromRedisClient(storage.Client)
-	if s.settings.FlushOnStart {
+	if s.settings.Spider.FlushOnStart {
 		if err := storage.Clear(); err != nil {
 			s.Logger.WithFields(LogFields{
 				"errMsg": err.Error(),
@@ -124,10 +125,10 @@ func (s *RedisSpider) Init() {
 		}
 		s.Client.Del(s.RedisKey)
 	}
-	q, _ := NewQueue(s.settings.ConcurrentReqs, storage)
+	q, _ := NewQueue(s.settings.Spider.ConcurrentReqs, storage)
 	s.Queue = q
 	// 如果配置了最大闲置时间
-	if s.settings.MaxIdleTimeout != 0 {
+	if s.settings.Spider.MaxIdleTimeout != 0 {
 		s.OnRequest(s.recordLastTime)
 		atomic.StoreInt64(&s.last, gcommon.TimeStamp(3))
 	}
@@ -136,21 +137,12 @@ func (s *RedisSpider) Init() {
 /*
 NewRedisSpider 生成一个redis spider实例
 */
-func NewRedisSpider(redisKey string, settings *SpiderSettings) *RedisSpider {
-	// default redisKey
-	if redisKey == "" {
-		redisKey = "start_urls"
-	}
-	// reids key的prefix
-	prefix := settings.RedisPrefix
-	// 给redisKey 添加前缀
-	redisKey = prefix + ":" + redisKey
+func NewRedisSpider(settings SpiderSettings) *RedisSpider {
 	spider := &RedisSpider{
 		BaseSpider: BaseSpider{
 			Collector: colly.NewCollector(),
 			settings:  settings,
 		},
-		RedisKey: redisKey,
 		wg:       &sync.WaitGroup{},
 	}
 	spider.Init()
