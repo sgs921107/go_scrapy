@@ -3,8 +3,13 @@ package xmlquery
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"strings"
+
+	"golang.org/x/net/html/charset"
 )
 
 // A NodeType is the type of a Node.
@@ -14,8 +19,8 @@ const (
 	// DocumentNode is a document object that, as the root of the document tree,
 	// provides access to the entire XML document.
 	DocumentNode NodeType = iota
-	// DeclarationNode is the document type declaration, indicated by the
-	// following tag (for example, <!DOCTYPE...> ).
+	// DeclarationNode is the document type declaration, indicated by the following
+	// tag (for example, <!DOCTYPE...> ).
 	DeclarationNode
 	// ElementNode is an element (for example, <item> ).
 	ElementNode
@@ -29,12 +34,6 @@ const (
 	AttributeNode
 )
 
-type Attr struct {
-	Name         xml.Name
-	Value        string
-	NamespaceURI string
-}
-
 // A Node consists of a NodeType and some Data (tag name for
 // element nodes, content for text) and are part of a tree of Nodes.
 type Node struct {
@@ -44,7 +43,7 @@ type Node struct {
 	Data         string
 	Prefix       string
 	NamespaceURI string
-	Attr         []Attr
+	Attr         []xml.Attr
 
 	level int // node level in the tree
 }
@@ -88,13 +87,8 @@ func calculatePreserveSpaces(n *Node, pastValue bool) bool {
 func outputXML(buf *bytes.Buffer, n *Node, preserveSpaces bool) {
 	preserveSpaces = calculatePreserveSpaces(n, preserveSpaces)
 	switch n.Type {
-	case TextNode:
+	case TextNode, CharDataNode:
 		xml.EscapeText(buf, []byte(n.sanitizedData(preserveSpaces)))
-		return
-	case CharDataNode:
-		buf.WriteString("<![CDATA[")
-		buf.WriteString(n.Data)
-		buf.WriteString("]]>")
 		return
 	case CommentNode:
 		buf.WriteString("<!--")
@@ -152,16 +146,15 @@ func (n *Node) OutputXML(self bool) string {
 	return buf.String()
 }
 
-// AddAttr adds a new attribute specified by 'key' and 'val' to a node 'n'.
-func AddAttr(n *Node, key, val string) {
-	var attr Attr
+func addAttr(n *Node, key, val string) {
+	var attr xml.Attr
 	if i := strings.Index(key, ":"); i > 0 {
-		attr = Attr{
+		attr = xml.Attr{
 			Name:  xml.Name{Space: key[:i], Local: key[i+1:]},
 			Value: val,
 		}
 	} else {
-		attr = Attr{
+		attr = xml.Attr{
 			Name:  xml.Name{Local: key},
 			Value: val,
 		}
@@ -170,13 +163,10 @@ func AddAttr(n *Node, key, val string) {
 	n.Attr = append(n.Attr, attr)
 }
 
-// AddChild adds a new node 'n' to a node 'parent' as its last child.
-func AddChild(parent, n *Node) {
+func addChild(parent, n *Node) {
 	n.Parent = parent
-	n.NextSibling = nil
 	if parent.FirstChild == nil {
 		parent.FirstChild = n
-		n.PrevSibling = nil
 	} else {
 		parent.LastChild.NextSibling = n
 		n.PrevSibling = parent.LastChild
@@ -185,48 +175,153 @@ func AddChild(parent, n *Node) {
 	parent.LastChild = n
 }
 
-// AddSibling adds a new node 'n' as a sibling of a given node 'sibling'.
-// Note it is not necessarily true that the new node 'n' would be added
-// immediately after 'sibling'. If 'sibling' isn't the last child of its
-// parent, then the new node 'n' will be added at the end of the sibling
-// chain of their parent.
-func AddSibling(sibling, n *Node) {
+func addSibling(sibling, n *Node) {
 	for t := sibling.NextSibling; t != nil; t = t.NextSibling {
 		sibling = t
 	}
 	n.Parent = sibling.Parent
 	sibling.NextSibling = n
 	n.PrevSibling = sibling
-	n.NextSibling = nil
 	if sibling.Parent != nil {
 		sibling.Parent.LastChild = n
 	}
 }
 
-// RemoveFromTree removes a node and its subtree from the document
-// tree it is in. If the node is the root of the tree, then it's no-op.
-func RemoveFromTree(n *Node) {
-	if n.Parent == nil {
-		return
+// LoadURL loads the XML document from the specified URL.
+func LoadURL(url string) (*Node, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
 	}
-	if n.Parent.FirstChild == n {
-		if n.Parent.LastChild == n {
-			n.Parent.FirstChild = nil
-			n.Parent.LastChild = nil
-		} else {
-			n.Parent.FirstChild = n.NextSibling
-			n.NextSibling.PrevSibling = nil
+	defer resp.Body.Close()
+	return parse(resp.Body)
+}
+
+func parse(r io.Reader) (*Node, error) {
+	var (
+		decoder      = xml.NewDecoder(r)
+		doc          = &Node{Type: DocumentNode}
+		space2prefix = make(map[string]string)
+		level        = 0
+	)
+	// http://www.w3.org/XML/1998/namespace is bound by definition to the prefix xml.
+	space2prefix["http://www.w3.org/XML/1998/namespace"] = "xml"
+	decoder.CharsetReader = charset.NewReaderLabel
+	prev := doc
+	for {
+		tok, err := decoder.Token()
+		switch {
+		case err == io.EOF:
+			goto quit
+		case err != nil:
+			return nil, err
 		}
-	} else {
-		if n.Parent.LastChild == n {
-			n.Parent.LastChild = n.PrevSibling
-			n.PrevSibling.NextSibling = nil
-		} else {
-			n.PrevSibling.NextSibling = n.NextSibling
-			n.NextSibling.PrevSibling = n.PrevSibling
+
+		switch tok := tok.(type) {
+		case xml.StartElement:
+			if level == 0 {
+				// mising XML declaration
+				node := &Node{Type: DeclarationNode, Data: "xml", level: 1}
+				addChild(prev, node)
+				level = 1
+				prev = node
+			}
+			// https://www.w3.org/TR/xml-names/#scoping-defaulting
+			for _, att := range tok.Attr {
+				if att.Name.Local == "xmlns" {
+					space2prefix[att.Value] = ""
+				} else if att.Name.Space == "xmlns" {
+					space2prefix[att.Value] = att.Name.Local
+				}
+			}
+
+			if tok.Name.Space != "" {
+				if _, found := space2prefix[tok.Name.Space]; !found {
+					return nil, errors.New("xmlquery: invalid XML document, namespace is missing")
+				}
+			}
+
+			for i := 0; i < len(tok.Attr); i++ {
+				att := &tok.Attr[i]
+				if prefix, ok := space2prefix[att.Name.Space]; ok {
+					att.Name.Space = prefix
+				}
+			}
+
+			node := &Node{
+				Type:         ElementNode,
+				Data:         tok.Name.Local,
+				Prefix:       space2prefix[tok.Name.Space],
+				NamespaceURI: tok.Name.Space,
+				Attr:         tok.Attr,
+				level:        level,
+			}
+			//fmt.Println(fmt.Sprintf("start > %s : %d", node.Data, level))
+			if level == prev.level {
+				addSibling(prev, node)
+			} else if level > prev.level {
+				addChild(prev, node)
+			} else if level < prev.level {
+				for i := prev.level - level; i > 1; i-- {
+					prev = prev.Parent
+				}
+				addSibling(prev.Parent, node)
+			}
+			prev = node
+			level++
+		case xml.EndElement:
+			level--
+		case xml.CharData:
+			node := &Node{Type: CharDataNode, Data: string(tok), level: level}
+			if level == prev.level {
+				addSibling(prev, node)
+			} else if level > prev.level {
+				addChild(prev, node)
+			} else if level < prev.level {
+				for i := prev.level - level; i > 1; i-- {
+					prev = prev.Parent
+				}
+				addSibling(prev.Parent, node)
+			}
+		case xml.Comment:
+			node := &Node{Type: CommentNode, Data: string(tok), level: level}
+			if level == prev.level {
+				addSibling(prev, node)
+			} else if level > prev.level {
+				addChild(prev, node)
+			} else if level < prev.level {
+				for i := prev.level - level; i > 1; i-- {
+					prev = prev.Parent
+				}
+				addSibling(prev.Parent, node)
+			}
+		case xml.ProcInst: // Processing Instruction
+			if prev.Type != DeclarationNode {
+				level++
+			}
+			node := &Node{Type: DeclarationNode, Data: tok.Target, level: level}
+			pairs := strings.Split(string(tok.Inst), " ")
+			for _, pair := range pairs {
+				pair = strings.TrimSpace(pair)
+				if i := strings.Index(pair, "="); i > 0 {
+					addAttr(node, pair[:i], strings.Trim(pair[i+1:], `"`))
+				}
+			}
+			if level == prev.level {
+				addSibling(prev, node)
+			} else if level > prev.level {
+				addChild(prev, node)
+			}
+			prev = node
+		case xml.Directive:
 		}
+
 	}
-	n.Parent = nil
-	n.PrevSibling = nil
-	n.NextSibling = nil
+quit:
+	return doc, nil
+}
+
+// Parse returns the parse tree for the XML from the given Reader.
+func Parse(r io.Reader) (*Node, error) {
+	return parse(r)
 }

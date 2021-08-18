@@ -8,33 +8,27 @@ xmlquery
 Overview
 ===
 
-`xmlquery` is an XPath query package for XML documents, allowing you to extract 
-data or evaluate from XML documents with an XPath expression.
+`xmlquery` is an XPath query package for XML document, lets you extract data or evaluate from XML documents by an XPath expression.
 
-`xmlquery` has a built-in query object caching feature that caches recently used
-XPATH query strings. Enabling caching can avoid recompile XPath expression for 
-each query. 
+`xmlquery` built-in the query object caching feature will caching the recently used XPATH query string. Enable caching can avoid re-compile XPath expression each query. 
 
 Change Logs
 ===
-
-2020-08-??
-- Add XML stream loading and parsing support.
 
 2019-11-11 
 - Add XPath query caching.
 
 2019-10-05 
-- Add new methods compatible with invalid XPath expression error: `QueryAll` and `Query`.
-- Add `QuerySelector` and `QuerySelectorAll` methods, support for reused query objects.
+- Add new methods that compatible with invalid XPath expression error: `QueryAll` and `Query`.
+- Add `QuerySelector` and `QuerySelectorAll` methods, supported reused your query object.
 - PR [#12](https://github.com/antchfx/xmlquery/pull/12) (Thanks @FrancescoIlario)
 - PR [#11](https://github.com/antchfx/xmlquery/pull/11) (Thanks @gjvnq)
 
 2018-12-23
-- Added XML output including comment nodes. [#9](https://github.com/antchfx/xmlquery/issues/9)
+- added XML output will including comment node. [#9](https://github.com/antchfx/xmlquery/issues/9)
 
 2018-12-03
-- Added support to attribute name with namespace prefix and XML output. [#6](https://github.com/antchfx/xmlquery/issues/6)
+- added support attribute name with namespace prefix and XML output. [#6](https://github.com/antchfx/xmlquery/issues/6)
 
 Installation
 ====
@@ -54,56 +48,24 @@ if err != nil {
 }
 ```
 
-#### Parse an XML from URL.
+#### Parse a XML from URL.
 
 ```go
 doc, err := xmlquery.LoadURL("http://www.example.com/sitemap.xml")
 ```
 
-#### Parse an XML from string.
+#### Parse a XML from string.
 
 ```go
 s := `<?xml version="1.0" encoding="utf-8"?><rss version="2.0"></rss>`
 doc, err := xmlquery.Parse(strings.NewReader(s))
 ```
 
-#### Parse an XML from io.Reader.
+#### Parse a XML from io.Reader.
 
 ```go
 f, err := os.Open("../books.xml")
 doc, err := xmlquery.Parse(f)
-```
-
-#### Parse an XML in a stream fashion (simple case without elements filtering).
-
-```go
-f, err := os.Open("../books.xml")
-p, err := xmlquery.CreateStreamParser(f, "/bookstore/book")
-for {
-	n, err := p.Read()
-	if err == io.EOF {
-		break
-	}
-	if err != nil {
-		...
-	}
-}
-```
-
-#### Parse an XML in a stream fashion (simple case advanced element filtering).
-
-```go
-f, err := os.Open("../books.xml")
-p, err := xmlquery.CreateStreamParser(f, "/bookstore/book", "/bookstore/book[price>=10]")
-for {
-	n, err := p.Read()
-	if err == io.EOF {
-		break
-	}
-	if err != nil {
-		...
-	}
-}
 ```
 
 #### Find authors of all books in the bookstore.
@@ -120,25 +82,25 @@ list := xmlquery.Find(doc, "//author")
 book := xmlquery.FindOne(doc, "//book[2]")
 ```
 
-#### Find all book elements and only get `id` attribute. (New Feature)
+#### Find all book elements and only get `id` attribute self. (New Feature)
 
 ```go
 list := xmlquery.Find(doc,"//book/@id")
 ```
 
-#### Find all books with id `bk104`.
+#### Find all books with id is bk104.
 
 ```go
 list := xmlquery.Find(doc, "//book[@id='bk104']")
 ```
 
-#### Find all books with price less than 5.
+#### Find all books that price less than 5.
 
 ```go
 list := xmlquery.Find(doc, "//book[price<5]")
 ```
 
-#### Evaluate total price of all books.
+#### Evaluate the total price of all books.
 
 ```go
 expr, err := xpath.Compile("sum(//book/price)")
@@ -146,7 +108,7 @@ price := expr.Evaluate(xmlquery.CreateXPathNavigator(doc)).(float64)
 fmt.Printf("total price: %f\n", price)
 ```
 
-#### Evaluate number of all book elements.
+#### Evaluate the number of all books element.
 
 ```go
 expr, err := xpath.Compile("count(//book)")
@@ -158,17 +120,14 @@ FAQ
 
 #### `Find()` vs `QueryAll()`, which is better?
 
-`Find` and `QueryAll` both do the same thing: searches all of matched XML nodes.
-`Find` panics if provided with an invalid XPath query, while `QueryAll` returns
-an error.
+`Find` and `QueryAll` both do the same things, searches all of matched html nodes.
+The `Find` will panics if you give an error XPath query, but `QueryAll` will return an error for you.
 
 #### Can I save my query expression object for the next query?
 
-Yes, you can. We provide `QuerySelector` and `QuerySelectorAll` methods; they 
-accept your query expression object.
+Yes, you can. We offer the `QuerySelector` and `QuerySelectorAll` methods, It will accept your query expression object.
 
-Caching a query expression object avoids recompiling the XPath query 
-expression, improving query performance.
+Cache a query expression object(or reused) will avoid re-compile XPath query expression, improve your query performance.
 
 #### Create XML document.
 
@@ -251,11 +210,11 @@ func main(){
 
 List of supported XPath query packages
 ===
-| Name                                              | Description                               |
-| ------------------------------------------------- | ----------------------------------------- |
-| [htmlquery](https://github.com/antchfx/htmlquery) | XPath query package for HTML documents    |
-| [xmlquery](https://github.com/antchfx/xmlquery)   | XPath query package for XML documents     |
-| [jsonquery](https://github.com/antchfx/jsonquery) | XPath query package for JSON documents    |
+|Name |Description |
+|--------------------------|----------------|
+|[htmlquery](https://github.com/antchfx/htmlquery) | XPath query package for the HTML document|
+|[xmlquery](https://github.com/antchfx/xmlquery) | XPath query package for the XML document|
+|[jsonquery](https://github.com/antchfx/jsonquery) | XPath query package for the JSON document|
 
  Questions
 ===
