@@ -18,8 +18,6 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-const stop = true
-
 // Storage is the interface of the queue's storage backend
 // Storage must be concurrently safe for multiple goroutines.
 type Storage interface {
@@ -135,7 +133,7 @@ func (q *Queue) Size() (int, error) {
 // The given Storage must not be used directly while Run blocks.
 func (q *Queue) Run(c *colly.Collector) error {
 	q.mut.Lock()
-	if q.wake != nil && q.running == true {
+	if q.wake != nil && q.running {
 		q.mut.Unlock()
 		panic("cannot call duplicate Queue.Run")
 	}

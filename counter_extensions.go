@@ -2,26 +2,25 @@
  * @Author: xiangcai
  * @Date: 2021-07-23 17:11:54
  * @LastEditors: xiangcai
- * @LastEditTime: 2021-07-23 17:47:35
+ * @LastEditTime: 2021-08-18 14:05:52
  * @Description: file content
  */
 
- package gspider
+package gspider
 
- import (
+import (
+	"sync/atomic"
 	"time"
-	 "sync/atomic"
- )
+)
 
+type CounterExtension struct {
+	curReqCounter  int64
+	curRespCounter int64
+	reqCounter     int64
+	respCounter    int64
+}
 
- type CounterExtension struct {
-	curReqCounter   int64
-	curRespCounter  int64
-	reqCounter      int64
-	respCounter     int64
- }
-
- // 给请求计数器追加1
+// 给请求计数器追加1
 func (c *CounterExtension) recordReq(*Request) {
 	atomic.AddInt64(&c.curReqCounter, 1)
 	atomic.AddInt64(&c.reqCounter, 1)
@@ -41,19 +40,16 @@ func (c *CounterExtension) Run(spider *BaseSpider) {
 		if atomic.LoadUint32(&spider.exit) != 0 {
 			break
 		}
-		select {
-		case <-ticker.C:
-			spider.Logger.Infof(
-				"----------------------crawled (%d/%d), (%d/%d)/min------------------------",
-				atomic.LoadInt64(&c.reqCounter),
-				atomic.LoadInt64(&c.respCounter),
-				atomic.SwapInt64(&c.curReqCounter, 0),
-				atomic.SwapInt64(&c.curRespCounter, 0),
-			)
-		}
+		<-ticker.C
+		spider.Logger.Infof(
+			"----------------------crawled (%d/%d), (%d/%d)/min------------------------",
+			atomic.LoadInt64(&c.respCounter),
+			atomic.LoadInt64(&c.reqCounter),
+			atomic.SwapInt64(&c.curRespCounter, 0),
+			atomic.SwapInt64(&c.curReqCounter, 0),
+		)
 	}
 }
-
 
 func NewCounterExtension() Extension {
 	return &CounterExtension{}

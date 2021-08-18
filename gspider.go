@@ -144,7 +144,7 @@ func (s *BaseSpider) SetLogger() {
 		RotationMaxAge: time.Duration(s.settings.Log.RotationMaxAge) * time.Hour,
 	}).GetLogger()
 	// 配置debugger
-	if s.settings.Spider.Debug == true {
+	if s.settings.Spider.Debug {
 		s.Collector.SetDebugger(&debug.LogDebugger{
 			Output: s.Logger.Out,
 		})
@@ -167,7 +167,7 @@ func (s *BaseSpider) LoadSettings() {
 	// 设置timeout
 	s.Collector.SetRequestTimeout(time.Duration(s.settings.Spider.Timeout) * time.Second)
 	// 配置是否启用cookies
-	if s.settings.Spider.EnableCookies == OFF {
+	if !s.settings.Spider.EnableCookies {
 		s.Collector.DisableCookies()
 	}
 	s.SetLogger()
