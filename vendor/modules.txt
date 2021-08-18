@@ -59,7 +59,7 @@ github.com/lestrrat-go/strftime
 github.com/pkg/errors
 # github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca
 github.com/saintfish/chardet
-# github.com/sgs921107/gcommon v0.0.0-20210817132131-d779eee1f981
+# github.com/sgs921107/gcommon v0.0.0-20210818040901-896a1917be8d
 ## explicit
 github.com/sgs921107/gcommon
 # github.com/sgs921107/glogging v0.0.0-20201223091949-fb29e1042839
@@ -82,7 +82,7 @@ golang.org/x/net/context
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/html/charset
-# golang.org/x/sys v0.0.0-20210816183151-1e6c022a8912
+# golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2
 ## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
