@@ -18,8 +18,6 @@ Log_RotationMaxAge=168
 
 # [redis]
 Redis_Prefix=gs
-# Redis_Addr=127.0.0.1:6379
-Redis_Addr=172.16.16.50:6006
+Redis_Addr=127.0.0.1:6379
 Redis_DB=0
-# Redis_Password=qaz123
-Redis_Password=123
+Redis_Password=qaz123
