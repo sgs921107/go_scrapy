@@ -40,10 +40,7 @@ listenStartURLs监听start_urls队列
 */
 func (s *RedisSpider) listenStartURLs() {
 	defer s.wg.Done()
-	for {
-		if atomic.LoadUint32(&s.exit) != 0 {
-			break
-		}
+	for atomic.LoadUint32(&s.exit) == 0 {
 		if url, err := s.Client.LPop(s.RedisKey).Result(); err == nil {
 			s.Queue.AddURL(url)
 		} else {
@@ -58,10 +55,10 @@ Start 启动redis spider
 */
 func (s *RedisSpider) Start() {
 	s.BaseSpider.Start()
-	defer s.Close()
+	defer s.close()
 	s.wg.Add(1)
 	go s.listenStartURLs()
-	for {
+	for atomic.LoadUint32(&s.exit) == 0 {
 		s.Queue.Run(s.Collector)
 		s.Collector.Wait()
 		if s.settings.Spider.MaxIdleTimeout != 0 {
@@ -69,6 +66,7 @@ func (s *RedisSpider) Start() {
 			now := gcommon.TimeStamp(3)
 			// 超出最大闲置时间则退出
 			if now-atomic.LoadInt64(&s.last) > int64(s.settings.Spider.MaxIdleTimeout) * int64(time.Second) {
+				s.Quit()
 				break
 			}
 		}
@@ -89,11 +87,11 @@ func (s *RedisSpider) recordLastTime(*Request) {
 /*
 Close 释放资源
 */
-func (s *RedisSpider) Close() {
-	s.Client.Close()
+func (s *RedisSpider) close() {
 	// 等待监听start urls队列的任务结束
 	s.wg.Wait()
-	s.BaseSpider.Close()
+	s.Client.Close()
+	s.BaseSpider.close()
 }
 
 /*

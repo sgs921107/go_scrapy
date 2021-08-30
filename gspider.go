@@ -181,17 +181,21 @@ func (s *BaseSpider) Init() {
 	}
 	s.LoadSettings()
 	s.SetExtensions()
-	counter_extension := NewCounterExtension()
-	s.AddExtension(counter_extension)
+	counterExtension := NewCounterExtension()
+	s.AddExtension(counterExtension)
 	// s.OnError(func(r *colly.Response, err error) {
 	// 	log.Printf("HttpError: url: %s, code: %d, err msg: %s", r.Request.URL, r.StatusCode, err.Error())
 	// })
 }
 
-// Close 释放资源
-func (s *BaseSpider) Close() {
-	defer s.Logger.Sync()
+// Quit quit
+func (s *BaseSpider) Quit() {
 	atomic.StoreUint32(&s.exit, 1)
+}
+
+// Close 释放资源
+func (s *BaseSpider) close() {
+	defer s.Logger.Sync()
 	s.Logger.Info("=====================spider close=======================")
 }
 

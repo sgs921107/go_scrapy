@@ -31,7 +31,7 @@ func (s *SimpleSpider) Start() {
 	s.BaseSpider.Start()
 	defer func() {
 		s.Queue.Stop()
-		s.Close()
+		s.close()
 	}()
 	for _, url := range s.Urls {
 		s.Queue.AddURL(url)
@@ -43,8 +43,8 @@ func (s *SimpleSpider) Start() {
 /*
 Close close
 */
-func (s *SimpleSpider) Close() {
-	s.BaseSpider.Close()
+func (s *SimpleSpider) close() {
+	s.BaseSpider.close()
 }
 
 /*
