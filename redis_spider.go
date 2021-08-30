@@ -112,16 +112,16 @@ func (s *RedisSpider) Init() {
 	// 不能在set storage前执行，会导致disable cookies被覆盖
 	s.BaseSpider.Init()
 	if err != nil {
-		s.Logger.WithFields(LogFields{
-			"errMsg": err.Error(),
-		}).Fatal("Set redis storage failed")
+		s.Logger.Fatalw("Set Redis Storage Failed",
+			"errMsg", err.Error(),
+		)
 	}
 	s.Client = gredis.NewClientFromRedisClient(storage.Client)
 	if s.settings.Spider.FlushOnStart {
 		if err := storage.Clear(); err != nil {
-			s.Logger.WithFields(LogFields{
-				"errMsg": err.Error(),
-			}).Error("clear previous data of redis storage failed")
+			s.Logger.Errorw("clear previous data of redis storage failed",
+				"errMsg", err.Error(),
+			)
 		}
 		s.Client.Del(s.RedisKey)
 	}

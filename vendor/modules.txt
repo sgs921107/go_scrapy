@@ -54,18 +54,29 @@ github.com/saintfish/chardet
 # github.com/sgs921107/gcommon v0.0.0-20210818040901-896a1917be8d
 ## explicit
 github.com/sgs921107/gcommon
-# github.com/sgs921107/glogging v0.0.0-20201223091949-fb29e1042839
+# github.com/sgs921107/glogging v0.0.0-20210830094609-c720c19ddffb
 ## explicit
 github.com/sgs921107/glogging
 # github.com/sgs921107/gredis v0.0.0-20210731094202-dc7fb7ec6bce
 ## explicit
 github.com/sgs921107/gredis
-# github.com/sirupsen/logrus v1.7.0
+# github.com/sirupsen/logrus v1.8.1
 github.com/sirupsen/logrus
 # github.com/temoto/robotstxt v1.1.1
 github.com/temoto/robotstxt
 # github.com/timest/env v0.0.0-20180717050204-5fce78d35255
 github.com/timest/env
+# go.uber.org/atomic v1.9.0
+go.uber.org/atomic
+# go.uber.org/multierr v1.7.0
+go.uber.org/multierr
+# go.uber.org/zap v1.19.0
+go.uber.org/zap
+go.uber.org/zap/buffer
+go.uber.org/zap/internal/bufferpool
+go.uber.org/zap/internal/color
+go.uber.org/zap/internal/exit
+go.uber.org/zap/zapcore
 # golang.org/x/net v0.0.0-20201216054612-986b41b23924
 golang.org/x/net/context
 golang.org/x/net/html

@@ -8,14 +8,15 @@
 package gspider
 
 import (
+	"time"
+	"runtime"
+	"net/http"
+	"sync/atomic"
+
+	"github.com/sgs921107/glogging"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/debug"
 	"github.com/gocolly/colly/v2/extensions"
-	"github.com/sgs921107/glogging"
-	"net/http"
-	"runtime"
-	"sync/atomic"
-	"time"
 )
 
 // 起别名
@@ -38,10 +39,8 @@ type (
 	XMLCallback      = colly.XMLCallback
 	// ScrapedCallback  = colly.ScrapedCallback
 	ScrapedCallback  = colly.ScrapedCallback
-	// LogFields logrus fields
-	LogFields		 = glogging.Fields
 	// Logger logrus logger
-	Logger			 = glogging.Logger
+	Logger			 = glogging.ZapSugaredLogger
 )
 
 // BaseSpider spider结构
@@ -54,7 +53,7 @@ type BaseSpider struct {
 
 // Start 启动方法
 func (s *BaseSpider) Start() {
-	s.Logger.Info("==========================spider start====================================")
+	s.Logger.Info("======================spider start==========================")
 }
 
 // SetHTTP http配置
@@ -137,16 +136,17 @@ func (s *BaseSpider) AddExtension(extension Extension) {
 
 // SetLogger 给spider配置一个logger
 func (s *BaseSpider) SetLogger() {
-	s.Logger = glogging.NewLogging(&glogging.Options{
+	zapLogging := glogging.NewZapLogging(glogging.Options{
 		Level: s.settings.Log.Level,
 		FilePath: s.settings.Log.File,
 		RotationTime: time.Duration(s.settings.Log.RotationTime) * time.Hour,
 		RotationMaxAge: time.Duration(s.settings.Log.RotationMaxAge) * time.Hour,
-	}).GetLogger()
+	})
+	s.Logger = zapLogging.GetSugaredLogger()
 	// 配置debugger
 	if s.settings.Spider.Debug {
 		s.Collector.SetDebugger(&debug.LogDebugger{
-			Output: s.Logger.Out,
+			Output: zapLogging.Output(),
 		})
 	}
 }
@@ -191,7 +191,7 @@ func (s *BaseSpider) Init() {
 // Close 释放资源
 func (s *BaseSpider) Close() {
 	atomic.StoreUint32(&s.exit, 1)
-	s.Logger.Info("==========================spider close====================================")
+	s.Logger.Info("=====================spider close=======================")
 }
 
 func init() {

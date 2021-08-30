@@ -4,14 +4,13 @@ import (
 	"time"
 )
 
-
-// Options 配置选项
+// Options	logger options
 type Options struct {
 	Level			string
 	FilePath		string
-	Formater		string
+	Formatter		string
 	RotationMaxAge	time.Duration
 	RotationTime	time.Duration
+	// 仅logrus
 	NoLock			bool
-	// ForceNewFile	bool
 }

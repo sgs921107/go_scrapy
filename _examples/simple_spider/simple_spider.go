@@ -38,15 +38,15 @@ func main() {
 	}
 	spider := gspider.NewSimpleSpider(urls, settings)
 	spider.OnRequest(func(r *gspider.Request) {
-		spider.Logger.WithFields(gspider.LogFields{
-			"method": r.Method,
-			"url":    r.URL,
-		}).Info("send a req")
+		spider.Logger.Infow("send a req",
+			"method", r.Method,
+			"url", r.URL,
+		)
 	})
 	spider.OnResponse(func(r *gspider.Response) {
-		spider.Logger.WithFields(gspider.LogFields{
-			"url": r.Request.URL,
-		}).Info("recv a resp")
+		spider.Logger.Infow("recv a resp",
+			"url", r.Request.URL,
+		)
 	})
 	spider.Start()
 }
