@@ -91,9 +91,9 @@ Close 释放资源
 */
 func (s *RedisSpider) Close() {
 	s.Client.Close()
-	s.BaseSpider.Close()
 	// 等待监听start urls队列的任务结束
 	s.wg.Wait()
+	s.BaseSpider.Close()
 }
 
 /*

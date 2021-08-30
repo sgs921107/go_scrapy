@@ -190,6 +190,7 @@ func (s *BaseSpider) Init() {
 
 // Close 释放资源
 func (s *BaseSpider) Close() {
+	defer s.Logger.Sync()
 	atomic.StoreUint32(&s.exit, 1)
 	s.Logger.Info("=====================spider close=======================")
 }
