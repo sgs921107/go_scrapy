@@ -83,7 +83,7 @@ func (l zapLog) encoder() zapcore.Encoder {
 	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	// 详细展示调用者
 	encoderConfig.EncodeCaller = zapcore.FullCallerEncoder
-	switch l.options.Formatter {
+	switch strings.ToUpper(l.options.Formatter) {
 	case "TEXT":
 		// 文本格式
 		return zapcore.NewConsoleEncoder(encoderConfig)

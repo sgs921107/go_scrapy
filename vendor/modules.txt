@@ -51,13 +51,13 @@ github.com/lestrrat-go/strftime
 github.com/pkg/errors
 # github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca
 github.com/saintfish/chardet
-# github.com/sgs921107/gcommon v0.0.0-20210818040901-896a1917be8d
+# github.com/sgs921107/gcommon v0.0.0-20220228084550-b8a4363f81e1
 ## explicit
 github.com/sgs921107/gcommon
-# github.com/sgs921107/glogging v0.0.0-20210830094609-c720c19ddffb
+# github.com/sgs921107/glogging v0.0.0-20220302022219-f71348a06873
 ## explicit
 github.com/sgs921107/glogging
-# github.com/sgs921107/gredis v0.0.0-20210731094202-dc7fb7ec6bce
+# github.com/sgs921107/gredis v0.0.0-20241031052935-2b5d85307946
 ## explicit
 github.com/sgs921107/gredis
 # github.com/sirupsen/logrus v1.8.1

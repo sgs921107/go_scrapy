@@ -21,10 +21,10 @@ var (
 	EnvIgnorePrefix = env.IgnorePrefix
 )
 
-func readFile(filename string) (envMap map[string]string, err error) {
+func ReadFileEnv(filename string) (map[string]string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return
+		return nil, err
 	}
 	defer file.Close()
 
@@ -33,7 +33,7 @@ func readFile(filename string) (envMap map[string]string, err error) {
 
 // LoadEnvFile load env file
 func LoadEnvFile(filename string, overload bool) error {
-	envMap, err := readFile(filename)
+	envMap, err := ReadFileEnv(filename)
 	if err != nil {
 		return err
 	}
